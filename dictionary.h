@@ -9,12 +9,12 @@ typedef struct key_value{
 } key_value_t;
 
 typedef struct dictionary{
-    // size_t size;
-    key_value_t* entries;
+    size_t size;
+    key_value_t** entries;
 } dictionary_t;
 
 key_value_t* new_key_value(void* key, void* value);
-int add_key_value(dictionary_t* dict, key_value_t* key_val);
+int register_key_value(dictionary_t* dict, key_value_t* key_val);
 void* get_value(dictionary_t* dict, void* key);
 
-dictionary_t* new_dictionary(/*const size_t size*/);
+dictionary_t* new_dictionary(const size_t size);
