@@ -73,3 +73,33 @@ void* get_value(dictionary_t* dict, void* key){
     }
     return NULL;
 }
+
+key_value_t* get_key_value(dictionary_t* dict, void* key){
+    unsigned int hash = DJBHash(key, strlen(key));
+    hash %= dict->size;
+    key_value_t* current = dict->entries[hash];
+    size_t len = strlen(key);
+    while(current){
+        if(strlen(current->key) == len && !memcmp(current->key, key, len)){
+            return current;
+        }
+        current = current->next;
+    }
+    return NULL;
+}
+
+void remove_key_value(dictionary_t* dict, void* key){
+    unsigned int hash = DJBHash(key, strlen(key));
+    hash %= dict->size;
+    key_value_t* current = dict->entries[hash];
+    size_t len = strlen(key);
+    while(current){
+        if(strlen(current->key) == len && !memcmp(current->key, key, len)){
+            free(current);
+            dict->entries[hash] = NULL;
+            memset(current, 0, sizeof(key_value_t));
+            return;
+        }
+        current = current->next;
+    }
+}

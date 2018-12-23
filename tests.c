@@ -47,8 +47,8 @@ TEST(get_value){
     dictionary_t* dict = new_dictionary(10);
     key_value_t* entry = new_key_value((void *)"gino", (void *)1938);
     register_key_value(dict, entry);
-    void* key_value = get_value(dict, (void*)"gino");
-    ASSERT_THAT((int)key_value == 1938);
+    void* value = get_value(dict, (void*)"gino");
+    ASSERT_THAT((int)value == 1938);
 }
 
 TEST(get_multiple_value){
@@ -63,6 +63,66 @@ TEST(get_multiple_value){
     ASSERT_THAT((int)motumbo_value == 4664);
 }
 
+TEST(get_key_value){
+    dictionary_t* dict = new_dictionary(10);
+    key_value_t* entry = new_key_value((void *)"gino", (void *)1938);
+    register_key_value(dict, entry);
+    key_value_t* key_value = get_key_value(dict, (void*)"gino");
+    ASSERT_THAT((char *)key_value->key == "gino");
+    ASSERT_THAT((int)key_value->value == 1938);
+    ASSERT_THAT(key_value->next == NULL);
+}
+
+TEST(replace_value){
+    dictionary_t* dict = new_dictionary(10);
+    key_value_t* entry = new_key_value((void *)"gino", (void *)1938);
+    register_key_value(dict, entry);
+    key_value_t* entry2 = new_key_value((void *)"gino", (void *)1111);
+    register_key_value(dict, entry2);
+    void* value = get_value(dict, (void*)"gino");
+    ASSERT_THAT((int)value == 1111);
+}
+
+TEST(remove_key_value){
+    dictionary_t* dict = new_dictionary(10);
+    key_value_t* entry = new_key_value((void *)"gino", (void *)1938);
+    register_key_value(dict, entry);
+    remove_key_value(dict, (void *)"gino");
+    void* value = get_value(dict, (void*)"gino");
+    ASSERT_THAT(value == NULL);
+}
+
+TEST(get_value_on_collision){
+    dictionary_t* dict = new_dictionary(1);
+    key_value_t* entry = new_key_value((void *)"gino", (void *)1938);
+    register_key_value(dict, entry);
+    key_value_t* entry2 = new_key_value((void *)"pino", (void *)1111);
+    register_key_value(dict, entry2);
+    void* value = get_value(dict, (void*)"gino");
+    ASSERT_THAT((int)value == 1938);
+    void* value2 = get_value(dict, (void*)"pino");
+    ASSERT_THAT((int)value2 == 1111);
+}
+
+TEST(get_value_with_wrong_key){
+    dictionary_t* dict = new_dictionary(10);
+    key_value_t* entry = new_key_value((void *)"gino", (void *)1938);
+    register_key_value(dict, entry);
+    void* value = get_value(dict, (void*)"pino");
+    ASSERT_THAT(value == NULL);
+    key_value_t* key_val = get_key_value(dict, (void*)"pino");
+    ASSERT_THAT(key_val == NULL);
+}
+
+// TEST(get_value_with_int_key){
+//     dictionary_t* dict = new_dictionary(10);
+//     key_value_t* entry = new_key_value((void *)1938, (void *)"gino");
+//     printf("sizeof: %llu\n", sizeof(entry->value));
+//     register_key_value(dict, entry);
+//     void* value = get_value(dict, (void*)1938);
+//     ASSERT_THAT((char*)value == "gino");
+// }
+
 int main(int argc, char **argv)
 {
     RUN_TEST(dumb);
@@ -72,6 +132,12 @@ int main(int argc, char **argv)
     RUN_TEST(add_multiple_entries);
     RUN_TEST(get_value);
     RUN_TEST(get_multiple_value);
+    RUN_TEST(get_key_value);
+    RUN_TEST(replace_value);
+    RUN_TEST(remove_key_value);
+    RUN_TEST(get_value_on_collision);
+    RUN_TEST(get_value_with_wrong_key);
+    //RUN_TEST(get_value_with_int_key);
     PRINT_TEST_RESULTS();
     return 0;
 }
