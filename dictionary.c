@@ -1,16 +1,16 @@
 #include "dictionary.h"
-#include "murmur3.h"
 #include <stdint.h>
 
-static unsigned int DJBHash(char* key, unsigned int len){
+static unsigned int DJBHash(void* key, unsigned int len){
     unsigned int hash = 5381;
     unsigned int i = 0;
-    // MurmurHash3_x64_128(key, len, 0x6384BA69, &hash);
-    for(i = 0; i < len; key++, i++)
+    char* ptr = key;
+    for(i = 0; i < len; i++)
     {   
-        hash = ((hash << 5) + hash) + (*key);
+        hash += hash << 5;
+        hash += *ptr;
+        ptr++;
     }   
-
     return hash;
 }
 
@@ -39,7 +39,6 @@ key_value_t* new_key_value(void* key, void* value, size_t key_length){
 int register_key_value(dictionary_t* dict, key_value_t* key_val){
     unsigned int hash = DJBHash(key_val->key, key_val->key_length);
     hash %= dict->size;
-    //printf("\n Here hash %d, key_length %zu\n\n", hash, key_val->key_length);
     key_value_t* current = dict->entries[hash];
     key_value_t* last = current;
     size_t len = key_val->key_length;
