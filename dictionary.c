@@ -98,10 +98,17 @@ void remove_key_value(dictionary_t* dict, void* key, size_t key_length){
     while(current){
         if(current->key_length == key_length && !memcmp(current->key, key, key_length)){
             if(!memcmp(current, last, sizeof(key_value_t)) && current->next != NULL){
-                printf(" HERE ");
                 dict->entries[hash] = current->next;
             }
-            last->next = current->next;
+            else if(!memcmp(current, last, sizeof(key_value_t)) && current->next == NULL){
+                dict->entries[hash] = NULL;
+            }
+
+            if(current->next){
+                last->next = current->next;
+            } else{
+                last->next = NULL;
+            }
             free(current);
             memset(current, 0, sizeof(key_value_t));
             return;

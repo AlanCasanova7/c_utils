@@ -130,7 +130,12 @@ TEST(remove_key_value_on_collision){
     ASSERT_THAT((int)value == 0);
     value = get_value(dict, (void*)"thirdVal", sizeof("thirdVal"));
     ASSERT_THAT((int)value == 3);
+
+    remove_key_value(dict, (void *)"thirdVal", sizeof("thirdVal"));
+    value = get_value(dict, (void*)"thirdVal", sizeof("thirdVal"));
+    ASSERT_THAT((int)value == 0);
     free(dict);
+    free(entry1);
 }
 
 TEST(remove_head_key_value_on_collision){
@@ -149,6 +154,8 @@ TEST(remove_head_key_value_on_collision){
     value = get_value(dict, (void*)"thirdVal", sizeof("thirdVal"));
     ASSERT_THAT((int)value == 3);
     free(dict);
+    free(entry2);
+    free(entry3);
 }
 
 TEST(get_value_on_collision){
