@@ -115,6 +115,42 @@ TEST(remove_key_value){
     free(dict);
 }
 
+TEST(remove_key_value_on_collision){
+    dictionary_t* dict = new_dictionary(1);
+    key_value_t* entry1 = new_key_value((void *)"firstVal", (void *)1, sizeof("firstVal"));
+    register_key_value(dict, entry1);
+    key_value_t* entry2 = new_key_value((void *)"secondVal", (void *)2, sizeof("secondVal"));
+    register_key_value(dict, entry2);
+    key_value_t* entry3 = new_key_value((void *)"thirdVal", (void *)3, sizeof("thirdVal"));
+    register_key_value(dict, entry3);
+    remove_key_value(dict, (void *)"secondVal", sizeof("secondVal"));
+    void* value = get_value(dict, (void*)"firstVal", sizeof("firstVal"));
+    ASSERT_THAT((int)value == 1);
+    value = get_value(dict, (void*)"secondVal", sizeof("secondVal"));
+    ASSERT_THAT((int)value == 0);
+    value = get_value(dict, (void*)"thirdVal", sizeof("thirdVal"));
+    ASSERT_THAT((int)value == 3);
+    free(dict);
+}
+
+TEST(remove_head_key_value_on_collision){
+    dictionary_t* dict = new_dictionary(1);
+    key_value_t* entry1 = new_key_value((void *)"firstVal", (void *)1, sizeof("firstVal"));
+    register_key_value(dict, entry1);
+    key_value_t* entry2 = new_key_value((void *)"secondVal", (void *)2, sizeof("secondVal"));
+    register_key_value(dict, entry2);
+    key_value_t* entry3 = new_key_value((void *)"thirdVal", (void *)3, sizeof("thirdVal"));
+    register_key_value(dict, entry3);
+    remove_key_value(dict, (void *)"firstVal", sizeof("firstVal"));
+    void* value = get_value(dict, (void*)"firstVal", sizeof("firstVal"));
+    ASSERT_THAT((int)value == 0);
+    value = get_value(dict, (void*)"secondVal", sizeof("secondVal"));
+    ASSERT_THAT((int)value == 2);
+    value = get_value(dict, (void*)"thirdVal", sizeof("thirdVal"));
+    ASSERT_THAT((int)value == 3);
+    free(dict);
+}
+
 TEST(get_value_on_collision){
     dictionary_t* dict = new_dictionary(1);
     key_value_t* entry = new_key_value((void *)"gino", (void *)1938, sizeof("gino"));
@@ -173,6 +209,8 @@ int main(int argc, char **argv)
     RUN_TEST(get_key_value);
     RUN_TEST(replace_value);
     RUN_TEST(remove_key_value);
+    RUN_TEST(remove_key_value_on_collision);
+    RUN_TEST(remove_head_key_value_on_collision);
     RUN_TEST(get_value_on_collision);
     RUN_TEST(get_value_with_wrong_key);
     RUN_TEST(get_value_with_int_key);

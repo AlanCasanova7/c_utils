@@ -94,14 +94,19 @@ void remove_key_value(dictionary_t* dict, void* key, size_t key_length){
     unsigned int hash = DJBHash(key, key_length);
     hash %= dict->size;
     key_value_t* current = dict->entries[hash];
-
+    key_value_t* last = current;
     while(current){
         if(current->key_length == key_length && !memcmp(current->key, key, key_length)){
+            if(!memcmp(current, last, sizeof(key_value_t)) && current->next != NULL){
+                printf(" HERE ");
+                dict->entries[hash] = current->next;
+            }
+            last->next = current->next;
             free(current);
-            dict->entries[hash] = NULL;
             memset(current, 0, sizeof(key_value_t));
             return;
         }
+        last = current;
         current = current->next;
     }
 }
