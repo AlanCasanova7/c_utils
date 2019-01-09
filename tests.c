@@ -2,6 +2,7 @@
 #include "hash.h"
 #include "aiv_unit_test.h"
 #include "asm_operation.h"
+#include "math.h"
 
 int tests_succeded = 0;
 int tests_failed = 0;
@@ -239,6 +240,52 @@ TEST(get_value_with_struct_key){
     free(entry);
 }
 
+TEST(screen_point_to_pixel_range){
+    vector2_t screen_size;
+    screen_size.width = 600;
+    screen_size.height = 600;
+
+    vector2_t screen_point;
+    screen_point.x = 0;
+    screen_point.y = 0;
+
+    vector2_t point = screen_point_to_pixel_range(screen_point, screen_size);
+    ASSERT_THAT(point.x == -1 && point.y == -1);
+
+    screen_point.x = 300;
+    screen_point.y = 300;
+    point = screen_point_to_pixel_range(screen_point, screen_size);
+    ASSERT_THAT(point.x == 0 && point.y == 0);
+
+    screen_point.x = 600;
+    screen_point.y = 600;
+    point = screen_point_to_pixel_range(screen_point, screen_size);
+    ASSERT_THAT(point.x == 1 && point.y == 1);
+}
+
+TEST(pixel_range_to_screen_point){
+    vector2_t screen_size;
+    screen_size.width = 600;
+    screen_size.height = 600;
+
+    vector2_t pixel_point;
+    pixel_point.x = -1;
+    pixel_point.y = -1;
+
+    vector2_t point = pixel_range_to_screen_point(pixel_point, screen_size);
+    ASSERT_THAT(point.x == 0 && point.y == 0);
+
+    pixel_point.x = 0;
+    pixel_point.y = 0;
+    point = pixel_range_to_screen_point(pixel_point, screen_size);
+    ASSERT_THAT(point.x == 300 && point.y == 300);
+
+    pixel_point.x = 1;
+    pixel_point.y = 1;
+    point = pixel_range_to_screen_point(pixel_point, screen_size);
+    ASSERT_THAT(point.x == 600 && point.y == 600);
+}
+
 int main(int argc, char **argv)
 {
     RUN_TEST(asm_RDRAND);
@@ -258,6 +305,8 @@ int main(int argc, char **argv)
     RUN_TEST(get_value_with_wrong_key);
     RUN_TEST(get_value_with_int_key);
     RUN_TEST(get_value_with_struct_key);
+    RUN_TEST(screen_point_to_pixel_range);
+    RUN_TEST(pixel_range_to_screen_point);
     PRINT_TEST_RESULTS();
     return 0;
 }
