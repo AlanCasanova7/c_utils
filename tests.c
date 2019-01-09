@@ -1,4 +1,5 @@
 #include "dictionary.h"
+#include "hash.h"
 #include "aiv_unit_test.h"
 #include "asm_operation.h"
 
@@ -41,13 +42,13 @@ TEST(init_dict){
     dictionary_t* dict = new_dictionary(10);
     ASSERT_THAT(dict != NULL);
     ASSERT_THAT(dict->entries != NULL);
-    ASSERT_THAT(dict->size == 10);
+    ASSERT_THAT(dict->hash_size == 10);
     free(dict);
 }
 
 TEST(new_entry){
-    key_value_t* entry = new_key_value((void *)"gino", (void *)1938, sizeof("gino"));
-    ASSERT_THAT((char*)entry->key == "gino");
+    key_value_t* entry = new_key_value((void *)"some_key", (void *)1938, sizeof("some_key"));
+    ASSERT_THAT((char*)entry->key == "some_key");
     ASSERT_THAT((int)entry->value == 1938);
     ASSERT_THAT(entry->next == NULL);
     free(entry);
@@ -55,24 +56,35 @@ TEST(new_entry){
 
 TEST(add_entry){
     dictionary_t* dict = new_dictionary(10);
-    key_value_t* entry = new_key_value((void *)"gino", (void *)1938, sizeof("gino"));
+    key_value_t* entry = new_key_value((void *)"some_key", (void *)1938, sizeof("some_key"));
     register_key_value(dict, entry);
+    unsigned int hash = DJBHash((void *)"some_key", sizeof("some_key"));
+    hash %= dict->hash_size;
     ASSERT_THAT(dict->entries != NULL);
-    //ASSERT_THAT((char*)dict->entries[0]->key == "gino"); //knowing that hash will return 2
-    //ASSERT_THAT((int)dict->entries[0]->value == 1938); //knowing that hash will return 2
+    ASSERT_THAT(dict->size == 1);
+    ASSERT_THAT((char*)dict->entries[hash]->key == "some_key"); 
+    ASSERT_THAT((int)dict->entries[hash]->value == 1938); 
     free(dict);
     free(entry);
 }
 
 TEST(add_multiple_entries){
     dictionary_t* dict = new_dictionary(10);
-    key_value_t* entry1 = new_key_value((void *)"gino", (void *)1938, sizeof("gino"));
+    key_value_t* entry1 = new_key_value((void *)"some_key", (void *)1938, sizeof("some_key"));
     register_key_value(dict, entry1);
-    key_value_t* entry2 = new_key_value((void *)"pino", (void *)748, sizeof("pino"));
+    key_value_t* entry2 = new_key_value((void *)"some_other_key", (void *)748, sizeof("some_other_key"));
     register_key_value(dict, entry2);
+
+    unsigned int hash0 = DJBHash((void *)"some_key", sizeof("some_key"));
+    hash0 %= dict->hash_size;
+
+    unsigned int hash1 = DJBHash((void *)"some_other_key", sizeof("some_other_key"));
+    hash1 %= dict->hash_size;
+
     ASSERT_THAT(dict->entries != NULL);
-    //ASSERT_THAT((char*)dict->entries[0]->key == "gino"); //knowing that hash will return 2
-    //ASSERT_THAT((int)dict->entries[9]->value == 748); //knowing that hash will return 5
+    ASSERT_THAT(dict->size == 2);
+    ASSERT_THAT((char*)dict->entries[hash0]->key == "some_key"); //knowing that hash will return 2
+    ASSERT_THAT((int)dict->entries[hash1]->value == 748); //knowing that hash will return 5
     free(dict);
     free(entry1);
     free(entry2);
@@ -80,9 +92,9 @@ TEST(add_multiple_entries){
 
 TEST(get_value){
     dictionary_t* dict = new_dictionary(10);
-    key_value_t* entry = new_key_value((void *)"gino", (void *)1938, sizeof("gino"));
+    key_value_t* entry = new_key_value((void *)"some_key", (void *)1938, sizeof("some_key"));
     register_key_value(dict, entry);
-    void* value = get_value(dict, (void*)"gino", sizeof("gino"));
+    void* value = get_value(dict, (void*)"some_key", sizeof("some_key"));
     ASSERT_THAT((int)value == 1938);
     free(dict);
     free(entry);
@@ -90,14 +102,14 @@ TEST(get_value){
 
 TEST(get_multiple_value){
     dictionary_t* dict = new_dictionary(10);
-    key_value_t* entry1 = new_key_value((void *)"gino", (void *)1938, sizeof("gino"));
+    key_value_t* entry1 = new_key_value((void *)"some_key", (void *)1938, sizeof("some_key"));
     register_key_value(dict, entry1);
-    void* gino_value = get_value(dict, (void*)"gino", sizeof("gino"));
-    key_value_t* entry2 = new_key_value((void *)"motumbo", (void *)4664, sizeof("motumbo"));
+    void* some_key_value = get_value(dict, (void*)"some_key", sizeof("some_key"));
+    key_value_t* entry2 = new_key_value((void *)"some_other_key", (void *)4664, sizeof("some_other_key"));
     register_key_value(dict, entry2);
-    void* motumbo_value = get_value(dict, (void*)"motumbo", sizeof("motumbo"));
-    ASSERT_THAT((int)gino_value == 1938);
-    ASSERT_THAT((int)motumbo_value == 4664);
+    void* some_other_key_value = get_value(dict, (void*)"some_other_key", sizeof("some_other_key"));
+    ASSERT_THAT((int)some_key_value == 1938);
+    ASSERT_THAT((int)some_other_key_value == 4664);
     free(dict);
     free(entry1);
     free(entry2);
@@ -105,10 +117,10 @@ TEST(get_multiple_value){
 
 TEST(get_key_value){
     dictionary_t* dict = new_dictionary(10);
-    key_value_t* entry = new_key_value((void *)"gino", (void *)1938, sizeof("gino"));
+    key_value_t* entry = new_key_value((void *)"some_key", (void *)1938, sizeof("some_key"));
     register_key_value(dict, entry);
-    key_value_t* key_value = get_key_value(dict, (void*)"gino", sizeof("gino"));
-    ASSERT_THAT((char *)key_value->key == "gino");
+    key_value_t* key_value = get_key_value(dict, (void*)"some_key", sizeof("some_key"));
+    ASSERT_THAT((char *)key_value->key == "some_key");
     ASSERT_THAT((int)key_value->value == 1938);
     ASSERT_THAT(key_value->next == NULL);
     free(dict);
@@ -117,11 +129,11 @@ TEST(get_key_value){
 
 TEST(replace_value){
     dictionary_t* dict = new_dictionary(10);
-    key_value_t* entry = new_key_value((void *)"gino", (void *)1938, sizeof("gino"));
+    key_value_t* entry = new_key_value((void *)"some_key", (void *)1938, sizeof("some_key"));
     register_key_value(dict, entry);
-    key_value_t* entry2 = new_key_value((void *)"gino", (void *)1111, sizeof("gino"));
+    key_value_t* entry2 = new_key_value((void *)"some_key", (void *)1111, sizeof("some_key"));
     register_key_value(dict, entry2);
-    void* value = get_value(dict, (void*)"gino", sizeof("gino"));
+    void* value = get_value(dict, (void*)"some_key", sizeof("some_key"));
     ASSERT_THAT((int)value == 1111);
     free(dict);
     free(entry);
@@ -130,10 +142,10 @@ TEST(replace_value){
 
 TEST(remove_key_value){
     dictionary_t* dict = new_dictionary(10);
-    key_value_t* entry = new_key_value((void *)"gino", (void *)1938, sizeof("gino"));
+    key_value_t* entry = new_key_value((void *)"some_key", (void *)1938, sizeof("some_key"));
     register_key_value(dict, entry);
-    remove_key_value(dict, (void *)"gino", sizeof("gino"));
-    void* value = get_value(dict, (void*)"gino", sizeof("gino"));
+    remove_key_value(dict, (void *)"some_key", sizeof("some_key"));
+    void* value = get_value(dict, (void*)"some_key", sizeof("some_key"));
     ASSERT_THAT((int)value == 0);
     free(dict);
 }
@@ -183,33 +195,33 @@ TEST(remove_head_key_value_on_collision){
 
 TEST(get_value_on_collision){
     dictionary_t* dict = new_dictionary(1);
-    key_value_t* entry = new_key_value((void *)"gino", (void *)1938, sizeof("gino"));
+    key_value_t* entry = new_key_value((void *)"some_key", (void *)1938, sizeof("some_key"));
     register_key_value(dict, entry);
-    key_value_t* entry2 = new_key_value((void *)"pino", (void *)1111, sizeof("pino"));
+    key_value_t* entry2 = new_key_value((void *)"some_other_key", (void *)1111, sizeof("some_other_key"));
     register_key_value(dict, entry2);
-    void* value = get_value(dict, (void*)"gino", sizeof("gino"));
+    void* value = get_value(dict, (void*)"some_key", sizeof("some_key"));
     ASSERT_THAT((int)value == 1938);
-    void* value2 = get_value(dict, (void*)"pino", sizeof("pino"));
+    void* value2 = get_value(dict, (void*)"some_other_key", sizeof("some_other_key"));
     ASSERT_THAT((int)value2 == 1111);
 }
 
 TEST(get_value_with_wrong_key){
     dictionary_t* dict = new_dictionary(10);
-    key_value_t* entry = new_key_value((void *)"gino", (void *)1938, sizeof("gino"));
+    key_value_t* entry = new_key_value((void *)"some_key", (void *)1938, sizeof("some_key"));
     register_key_value(dict, entry);
-    void* value = get_value(dict, (void*)"pino", sizeof("pino"));
+    void* value = get_value(dict, (void*)"some_other_key", sizeof("some_other_key"));
     ASSERT_THAT(value == NULL);
-    key_value_t* key_val = get_key_value(dict, (void*)"pino", sizeof("pino"));
+    key_value_t* key_val = get_key_value(dict, (void*)"some_other_key", sizeof("some_other_key"));
     ASSERT_THAT(key_val == NULL);
 }
 
 TEST(get_value_with_int_key){
     dictionary_t* dict = new_dictionary(10);
     int key = 19380;
-    key_value_t* entry = new_key_value((void *)&key, (void *)"gino", sizeof(key));
+    key_value_t* entry = new_key_value((void *)&key, (void *)"some_key", sizeof(key));
     register_key_value(dict, entry);
     void* value = get_value(dict, (void*)&key, sizeof(key));
-    ASSERT_THAT((char*)value == "gino");
+    ASSERT_THAT((char*)value == "some_key");
     free(dict);
     free(entry);
 }
@@ -218,11 +230,11 @@ TEST(get_value_with_struct_key){
     dictionary_t* dict = new_dictionary(10);
     random_struct_t key;
     key.age = 100;
-    key.name = "gatto";
-    key_value_t* entry = new_key_value((void *)&key, (void *)"gino", sizeof(key));
+    key.name = "random_name";
+    key_value_t* entry = new_key_value((void *)&key, (void *)"some_key", sizeof(key));
     register_key_value(dict, entry);
     void* value = get_value(dict, (void*)&key, sizeof(key));
-    ASSERT_THAT((char*)value == "gino");
+    ASSERT_THAT((char*)value == "some_key");
     free(dict);
     free(entry);
 }

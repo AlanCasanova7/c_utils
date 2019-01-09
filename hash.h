@@ -1,0 +1,1 @@
+unsigned int DJBHash(void* key, unsigned int len);

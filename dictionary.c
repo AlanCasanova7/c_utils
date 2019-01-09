@@ -1,18 +1,4 @@
 #include "dictionary.h"
-#include <stdint.h>
-
-static unsigned int DJBHash(void* key, unsigned int len){
-    unsigned int hash = 5381;
-    unsigned int i = 0;
-    char* ptr = key;
-    for(i = 0; i < len; i++)
-    {   
-        hash += hash << 5;
-        hash += *ptr;
-        ptr++;
-    }   
-    return hash;
-}
 
 dictionary_t* new_dictionary(const size_t size){
     dictionary_t* to_return = malloc(sizeof(dictionary_t));
@@ -20,7 +6,8 @@ dictionary_t* new_dictionary(const size_t size){
         return NULL;
     to_return->entries = malloc(sizeof(key_value_t)*size);
     memset(to_return->entries, 0, sizeof(key_value_t)*size);
-    to_return->size = size;
+    to_return->hash_size = size;
+    to_return->size = 0;
     return to_return;
 }
 
@@ -38,7 +25,7 @@ key_value_t* new_key_value(void* key, void* value, size_t key_length){
 
 int register_key_value(dictionary_t* dict, key_value_t* key_val){
     unsigned int hash = DJBHash(key_val->key, key_val->key_length);
-    hash %= dict->size;
+    hash %= dict->hash_size;
     key_value_t* current = dict->entries[hash];
     key_value_t* last = current;
     size_t len = key_val->key_length;
@@ -59,13 +46,13 @@ int register_key_value(dictionary_t* dict, key_value_t* key_val){
     } else{
         dict->entries[hash] = current;
     }
-
+    dict->size++;
     return 0;
 }
 
 void* get_value(dictionary_t* dict, void* key, size_t key_length){
     unsigned int hash = DJBHash(key, key_length);
-    hash %= dict->size;
+    hash %= dict->hash_size;
     key_value_t* current = dict->entries[hash];
     while(current){
         if(current->key_length == key_length && !memcmp(current->key, key, key_length)){
@@ -78,7 +65,7 @@ void* get_value(dictionary_t* dict, void* key, size_t key_length){
 
 key_value_t* get_key_value(dictionary_t* dict, void* key, size_t key_length){
     unsigned int hash = DJBHash(key, key_length);
-    hash %= dict->size;
+    hash %= dict->hash_size;
     key_value_t* current = dict->entries[hash];
 
     while(current){
@@ -92,7 +79,7 @@ key_value_t* get_key_value(dictionary_t* dict, void* key, size_t key_length){
 
 void remove_key_value(dictionary_t* dict, void* key, size_t key_length){
     unsigned int hash = DJBHash(key, key_length);
-    hash %= dict->size;
+    hash %= dict->hash_size;
     key_value_t* current = dict->entries[hash];
     key_value_t* last = current;
     while(current){
@@ -111,6 +98,7 @@ void remove_key_value(dictionary_t* dict, void* key, size_t key_length){
             }
             free(current);
             memset(current, 0, sizeof(key_value_t));
+            dict->size--;
             return;
         }
         last = current;

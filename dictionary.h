@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "hash.h"
 
 typedef struct key_value{
     void* key;
@@ -10,7 +11,8 @@ typedef struct key_value{
 } key_value_t;
 
 typedef struct dictionary{
-    size_t size;
+    unsigned long size;
+    size_t hash_size;
     key_value_t** entries;
 } dictionary_t;
 
