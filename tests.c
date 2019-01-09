@@ -1,5 +1,6 @@
 #include "dictionary.h"
 #include "aiv_unit_test.h"
+#include "asm_operation.h"
 
 int tests_succeded = 0;
 int tests_failed = 0;
@@ -10,8 +11,30 @@ typedef struct random_struct{
     int age;
 } random_struct_t;
 
-TEST(dumb){
-    ASSERT_THAT(1);
+TEST(asm_RDRAND){
+    long random1 = 0;
+    long random2 = 0;
+    ASM_RAND(random1);
+    //asm(
+    //    "RDRAND %%EAX\r\n"
+    //    "CLC" 
+    //    : "=a"(random1)
+    //);
+    printf("%ld \n", random1);
+    ASM_RAND(random2);
+    //asm(
+    //   "RDRAND %%EAX\r\n"
+    //    : "=a"(random2)
+    //);
+    printf("%ld \n", random2);
+    ASSERT_THAT(random1 != random2);
+}
+
+TEST(asm_CPUID){
+    char* cpu_id = NULL;
+    ASM_GET_CPU_NAME(cpu_id);
+
+    ASSERT_THAT(strcmp(cpu_id, "GenuineIntel"));
 }
 
 TEST(init_dict){
@@ -206,7 +229,8 @@ TEST(get_value_with_struct_key){
 
 int main(int argc, char **argv)
 {
-    RUN_TEST(dumb);
+    RUN_TEST(asm_RDRAND);
+    RUN_TEST(asm_CPUID);
     RUN_TEST(init_dict);
     RUN_TEST(new_entry);
     RUN_TEST(add_entry);
