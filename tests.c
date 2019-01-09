@@ -13,21 +13,21 @@ typedef struct random_struct{
 } random_struct_t;
 
 TEST(asm_RDRAND){
-    long random1 = 0;
-    long random2 = 0;
+    float random1 = 0;
+    float random2 = 0;
     ASM_RAND(random1);
     //asm(
     //    "RDRAND %%EAX\r\n"
     //    "CLC" 
     //    : "=a"(random1)
     //);
-    printf("%ld \n", random1);
+    printf("%f \n", random1);
     ASM_RAND(random2);
     //asm(
     //   "RDRAND %%EAX\r\n"
     //    : "=a"(random2)
     //);
-    printf("%ld \n", random2);
+    printf("%f \n", random2);
     ASSERT_THAT(random1 != random2);
 }
 
