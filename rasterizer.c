@@ -1,8 +1,10 @@
 #include "rasterizer.h"
 #include <stdio.h>
+#include <math.h>
 
-Vertex_t Vertex_new(vector3_t position, vector3_t color)
-{
+#define M_PI 3.1415926
+
+Vertex_t Vertex_new(vector3_t position, vector3_t color){
     Vertex_t vertex;
     memset(&vertex, 0, sizeof(Vertex_t));
     vertex.position = position;
@@ -10,13 +12,18 @@ Vertex_t Vertex_new(vector3_t position, vector3_t color)
     return vertex;
 }
 
-Triangle_t Triangle_new(Vertex_t a, Vertex_t b, Vertex_t c)
-{
+Triangle_t Triangle_new(Vertex_t a, Vertex_t b, Vertex_t c){
     Triangle_t triangle = {.a = a, .b = b, .c = c};
     return triangle;
 }
 
 void put_pixel(Context_t* ctx, unsigned int x, unsigned int y, unsigned char r, unsigned char g, unsigned char b){
+    if(x < 0 || y < 0 || x >= ctx->width || y >= ctx->height){
+        return;
+    }
+
+    //printf("%d, %d \n", x, y);
+
     int pixel = ((y * ctx->width) + x) * 4;
     ctx->framebuffer[pixel--] = 255;
     ctx->framebuffer[pixel--] = r;
@@ -24,20 +31,55 @@ void put_pixel(Context_t* ctx, unsigned int x, unsigned int y, unsigned char r, 
     ctx->framebuffer[pixel] = b;
 }
 
-void rasterize(Context_t *ctx, Triangle_t* triangle)
-{
-    vector2_t screen_size = {.width = ctx->width, .height = ctx->height};
-    vector3_t screen_point_a = pixel_range_to_screen_point_v3(triangle->a.position, screen_size);
-    vector3_t screen_point_b = pixel_range_to_screen_point_v3(triangle->b.position, screen_size);
-    vector3_t screen_point_c = pixel_range_to_screen_point_v3(triangle->c.position, screen_size);
+void view_to_raster(Context_t *ctx, Vertex_t* vertex){
+    float fov = (60.0 / 2) * (M_PI / 180.0);
+    float camera_distance = tan(fov);
+    
+    float projected_x = vertex->view_position.x / (camera_distance * vertex->view_position.z);
+    float projected_y = vertex->view_position.y / (camera_distance * vertex->view_position.z);
 
-    triangle->a.raster_x = screen_point_a.x;
-    triangle->b.raster_x = screen_point_b.x;
-    triangle->c.raster_x = screen_point_c.x;
+    vertex->raster_x = (projected_x + 1) * (ctx->width * 0.5);
+    vertex->raster_y = ctx->height - ((projected_y + 1) * (ctx->height * 0.5));
+}
 
-    triangle->a.raster_y = screen_point_a.y;
-    triangle->b.raster_y = screen_point_b.y;
-    triangle->c.raster_y = screen_point_c.y;
+void rasterize(Context_t *ctx, Triangle_t* triangle){
+    //vector2_t screen_size = {.width = ctx->width, .height = ctx->height};
+
+    triangle->a.view_position.x = triangle->a.position.x - ctx->camera.x;
+    triangle->a.view_position.y = triangle->a.position.y - ctx->camera.y;
+    triangle->a.view_position.z = triangle->a.position.z - ctx->camera.z;
+
+    triangle->b.view_position.x = triangle->b.position.x - ctx->camera.x;
+    triangle->b.view_position.y = triangle->b.position.y - ctx->camera.y;
+    triangle->b.view_position.z = triangle->b.position.z - ctx->camera.z;
+
+    triangle->c.view_position.x = triangle->c.position.x - ctx->camera.x;
+    triangle->c.view_position.y = triangle->c.position.y - ctx->camera.y;
+    triangle->c.view_position.z = triangle->c.position.z - ctx->camera.z;
+
+    //printf("BEFORE x: %f, y: %f, z: %f\n", triangle->a.view_position.x, triangle->a.view_position.y, triangle->a.view_position.z);
+
+    view_to_raster(ctx, &triangle->a);
+
+    //printf("AFTER x: %d, y: %d\n", triangle->a.raster_x, triangle->a.raster_y);
+
+    view_to_raster(ctx, &triangle->b);
+    view_to_raster(ctx, &triangle->c);
+    
+    //printf("a_x: %d, b_x: %d, c_x: %d\n", triangle->a.raster_x, triangle->b.raster_x, triangle->c.raster_x);
+    //printf("a_y: %d, b_y: %d, c_y: %d\n", triangle->a.raster_y, triangle->b.raster_y, triangle->c.raster_y);
+    // vector3_t screen_point_a = pixel_range_to_screen_point_v3(position_a, screen_size);
+    // vector3_t screen_point_b = pixel_range_to_screen_point_v3(position_b, screen_size);
+    // vector3_t screen_point_c = pixel_range_to_screen_point_v3(position_c, screen_size);
+
+    // triangle->a.raster_x = screen_point_a.x;
+    // triangle->a.raster_y = screen_point_a.y;
+    
+    // triangle->b.raster_x = screen_point_b.x;
+    // triangle->b.raster_y = screen_point_b.y;
+    
+    // triangle->c.raster_x = screen_point_c.x;
+    // triangle->c.raster_y = screen_point_c.y;
     return;
 }
 
@@ -45,26 +87,26 @@ Triangle_t sort_triangle_vertex(Triangle_t* triangle){
     Triangle_t to_return;
 
     if(triangle->a.raster_y > triangle->b.raster_y){
-        to_return.a = triangle->a;
-        to_return.b = triangle->b;
-    } 
-    else {
         to_return.a = triangle->b;
         to_return.b = triangle->a;
+    } 
+    else {
+        to_return.a = triangle->a;
+        to_return.b = triangle->b;
     }
 
     if(to_return.b.raster_y > triangle->c.raster_y){
-        to_return.c = triangle->c;
-    } 
-    else {
         to_return.c = to_return.b;
         to_return.b = triangle->c;
+    } 
+    else {
+        to_return.c = triangle->c;
     }
 
-    if(triangle->a.raster_y > to_return.c.raster_y){
-        int old_a = to_return.a.raster_y;
-        to_return.a.raster_y = to_return.c.raster_y;
-        to_return.c.raster_y = old_a;
+    if(to_return.a.raster_y > to_return.b.raster_y){
+        Vertex_t old_a = to_return.a;
+        to_return.a = to_return.b;
+        to_return.b = old_a;
     }
     return to_return;
 }
@@ -82,49 +124,79 @@ vector3_t interpolate_vertex_color(Vertex_t a, Vertex_t b, Vertex_t c, float x_p
     return to_return;
 }
 
+void append_vector(Triangle_t** array_of_vector, size_t* array_of_vector_size, Triangle_t value){
+    printf("sizeof value: %llu\n", sizeof(value));
+    printf("array points at: %p, there are: %zu elements\n", *array_of_vector, sizeof(*array_of_vector) / sizeof(*array_of_vector[0]));
+    *array_of_vector_size += 1;
+    printf("array_of_vector_size is now: %zu, old value was: %llu\n", *array_of_vector_size, *array_of_vector_size-1);
+    Triangle_t* resized_area = (Triangle_t*)realloc(*array_of_vector, sizeof(Triangle_t) * *array_of_vector_size);
+    printf("resized array points at: %p, there are: %zu elements\n", resized_area, sizeof(resized_area) / sizeof(resized_area[0]));
+    if(!resized_area){
+        printf("PANIC");
+        return;
+    }
+    *array_of_vector = resized_area;
+    printf("now old array points at: %p, there are: %zu elements\n", *array_of_vector, sizeof(*array_of_vector) / sizeof(*array_of_vector[0]));
+    *array_of_vector[*array_of_vector_size-1] = value;
+    printf("At the end the old array have: %zu elements.\n", sizeof(*array_of_vector) / sizeof(*array_of_vector[0]));
+}
+
 void draw_triangle(Context_t* ctx, Triangle_t* triangle){
     rasterize(ctx, triangle);
 
+    //printf("ORIGINAL:a_x: %d, a_y: %d, b_x: %d, b_y: %d, c_x: %d, c_y: %d\n", triangle->a.raster_x, triangle->a.raster_y, triangle->b.raster_x, triangle->b.raster_y, triangle->c.raster_x, triangle->c.raster_y);
+
     Triangle_t to_draw = sort_triangle_vertex(triangle);
-
-    // float Vx1 = to_draw.a.raster_x;
-    // float Vx2 = to_draw.b.raster_x;
-    // float Vx3 = to_draw.c.raster_x;
-
-    // float Vy1 = to_draw.a.raster_y;
-    // float Vy2 = to_draw.b.raster_y;
-    // float Vy3 = to_draw.c.raster_y;
-
     int y_position = to_draw.a.raster_y;
+
+    //printf("FIXED: a_x: %d, a_y: %d, b_x: %d, b_y: %d, c_x: %d, c_y: %d\n", to_draw.a.raster_x, to_draw.a.raster_y, to_draw.b.raster_x, to_draw.b.raster_y, to_draw.c.raster_x, to_draw.c.raster_y);
     for (; y_position <= to_draw.b.raster_y; y_position++)
     {
-        float gradient = (float)(y_position - to_draw.a.raster_y) / (float)(to_draw.b.raster_y - to_draw.a.raster_y);
+        float gradient = 1;
+        if(to_draw.a.raster_y != to_draw.b.raster_y){
+            gradient = (float)(y_position - to_draw.a.raster_y) / (float)(to_draw.b.raster_y - to_draw.a.raster_y);
+        } 
+        //float gradient = (float)(y_position - to_draw.a.raster_y) / (float)(to_draw.b.raster_y - to_draw.a.raster_y);
         float x_final_position = lerp(to_draw.a.raster_x, to_draw.b.raster_x, gradient);
 
-        float total_gradient = (float)(y_position - to_draw.a.raster_y) / (float)(to_draw.c.raster_y - to_draw.a.raster_y);
+        float total_gradient = 1;
+        if(to_draw.a.raster_y != to_draw.c.raster_y){
+            total_gradient = (float)(y_position - to_draw.a.raster_y) / (float)(to_draw.c.raster_y - to_draw.a.raster_y);
+        }
         float starting_x = lerp(to_draw.a.raster_x, to_draw.c.raster_x, total_gradient);
         float end = calculate_max(starting_x, x_final_position);
         float x_position = calculate_min(starting_x, x_final_position);
         for (; x_position < end; x_position++)
         {
-            vector3_t color = interpolate_vertex_color(to_draw.a, to_draw.b, to_draw.c, x_position, y_position);
+            vector3_t color = interpolate_vertex_color(triangle->a, triangle->b, triangle->c, x_position, y_position);
             put_pixel(ctx, x_position, y_position, color.r, color.g, color.b);
+            //put_pixel(ctx, x_position, y_position, 255, 255, 255);
         }
     }
     for (; y_position <= to_draw.c.raster_y; y_position++)
     {
-        float gradient = (float)(y_position - to_draw.c.raster_y) / (float)(to_draw.b.raster_y - to_draw.c.raster_y);
+        float gradient = 1;
+        if(to_draw.c.raster_y != to_draw.b.raster_y){
+            gradient = (float)(y_position - to_draw.c.raster_y) / (float)(to_draw.b.raster_y - to_draw.c.raster_y);
+        } 
+        //float gradient = (float)(y_position - to_draw.c.raster_y) / (float)(to_draw.b.raster_y - to_draw.c.raster_y);
         float x_final_position = lerp(to_draw.c.raster_x, to_draw.b.raster_x, gradient);
 
-        float total_gradient = (float)(y_position - to_draw.a.raster_y) / (float)(to_draw.c.raster_y - to_draw.a.raster_y);
-        float starting_x = lerp(to_draw.a.raster_x, to_draw.c.raster_x, total_gradient);
+        float total_gradient = 1;
+        if(to_draw.a.raster_y != to_draw.c.raster_y){
+            total_gradient = (float)(y_position - to_draw.a.raster_y) / (float)(to_draw.c.raster_y - to_draw.a.raster_y);
+        }
+        // float total_gradient = (float)(y_position - to_draw.a.raster_y) / (float)(to_draw.c.raster_y - to_draw.a.raster_y);
+        float starting_x = lerp(to_draw.c.raster_x, to_draw.a.raster_x, total_gradient);
 
+        //printf("x1: %f, x2: %f\n", starting_x, x_final_position);
         float end = calculate_max(starting_x, x_final_position);
         float x_position = calculate_min(starting_x, x_final_position);
         for (; x_position < end; x_position++)
         {
-            vector3_t color = interpolate_vertex_color(to_draw.a, to_draw.b, to_draw.c, x_position, y_position);
+            vector3_t color = interpolate_vertex_color(triangle->a, triangle->b, triangle->c, x_position, y_position);
             put_pixel(ctx, x_position, y_position, color.r, color.g, color.b);
+            //put_pixel(ctx, x_position, y_position, 255, 255, 255);
         }
     }
     return;
@@ -150,11 +222,13 @@ void draw_triangle(Context_t* ctx, Triangle_t* triangle){
     //         float a = ((Vy2 - Vy3)*(x_pos - Vx3) + (Vx3 - Vx2)*(y_pos - Vy3)) / ((Vy2 - Vy3)*(Vx1 - Vx3) + (Vx3 - Vx2)*(Vy1 - Vy3)); // massimo in p0
     //         float b = ((Vy3 - Vy1)*(x_pos - Vx3) + (Vx1 - Vx3)*(y_pos - Vy3)) / ((Vy2 - Vy3)*(Vx1 - Vx3) + (Vx3 - Vx2)*(Vy1 - Vy3)); // massimo in p1
     //         float c = 1 - a - b;                                                                                                     // massimo in p2
-
-
+            
     //         if(0 <= a && a <= 1 && 0 <= b && b <= 1 && 0 <= c && c <= 1){
-    //             //printf("a: %f, b: %f, c: %f\n", a, b, c);
-    //             put_pixel(ctx, x_pos, y_pos, a * 255, b * 255, c * 255);
+    //             float red = (a * to_draw.c.color.r) + (b * to_draw.b.color.r) + (a * to_draw.a.color.r);
+    //             float green = (c * to_draw.c.color.g) + (b * to_draw.b.color.g) + (a * to_draw.a.color.g);
+    //             float blue = (c * to_draw.c.color.b) + (b * to_draw.b.color.b) + (a * to_draw.a.color.b);
+
+    //             put_pixel(ctx, x_pos, y_pos, red, green, blue);
     //         }
     //     }
     // }

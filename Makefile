@@ -1,7 +1,7 @@
 CC=clang
 CFLAGS=-O2 -Wall -Werror -I. -Wno-pragma-pack
 LDFLAGS=-L. -lSDL2
-BINARY_TESTS=run_tests.exe
+BINARY_TESTS= main.exe
 
 all: run_tests.exe
 
