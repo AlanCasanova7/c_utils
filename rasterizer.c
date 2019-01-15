@@ -32,14 +32,21 @@ void put_pixel(Context_t* ctx, unsigned int x, unsigned int y, unsigned char r, 
 }
 
 void view_to_raster(Context_t *ctx, Vertex_t* vertex){
-    float fov = (60.0 / 2) * (M_PI / 180.0);
-    float camera_distance = tan(fov);
+    // float fov = (60.0 / 2) * (M_PI / 180.0);
+    // float camera_distance = tan(fov);
     
-    float projected_x = vertex->view_position.x / (camera_distance * vertex->view_position.z);
-    float projected_y = vertex->view_position.y / (camera_distance * vertex->view_position.z);
+    // float projected_x = vertex->view_position.x / (camera_distance * vertex->view_position.z);
+    // float projected_y = vertex->view_position.y / (camera_distance * vertex->view_position.z);
 
-    vertex->raster_x = (projected_x + 1) * (ctx->width * 0.5);
-    vertex->raster_y = ctx->height - ((projected_y + 1) * (ctx->height * 0.5));
+    // vertex->raster_x = (projected_x + 1) * (ctx->width * 0.5);
+    // vertex->raster_y = ctx->height - ((projected_y + 1) * (ctx->height * 0.5));
+    float fov = (60.0/2)*(M_PI/180);
+    float camera_distance=tan(fov);
+    float projected_x=vertex->view_position.x/(camera_distance*vertex->view_position.z);
+    float projected_y=vertex->view_position.y/(camera_distance*vertex->view_position.z);
+
+    vertex->raster_x=(projected_x+1)*(ctx->width*0.5);
+    vertex->raster_y=ctx->height-(projected_y+1)*(ctx->height*0.5);
 }
 
 void rasterize(Context_t *ctx, Triangle_t* triangle){
@@ -60,9 +67,7 @@ void rasterize(Context_t *ctx, Triangle_t* triangle){
     //printf("BEFORE x: %f, y: %f, z: %f\n", triangle->a.view_position.x, triangle->a.view_position.y, triangle->a.view_position.z);
 
     view_to_raster(ctx, &triangle->a);
-
     //printf("AFTER x: %d, y: %d\n", triangle->a.raster_x, triangle->a.raster_y);
-
     view_to_raster(ctx, &triangle->b);
     view_to_raster(ctx, &triangle->c);
     
@@ -137,15 +142,13 @@ void append_vector(Triangle_t** array_of_vector, size_t* array_of_vector_size, T
 
 void draw_triangle(Context_t* ctx, Triangle_t* triangle){
     rasterize(ctx, triangle);
-
-    //printf("ORIGINAL:a_x: %d, a_y: %d, b_x: %d, b_y: %d, c_x: %d, c_y: %d\n", triangle->a.raster_x, triangle->a.raster_y, triangle->b.raster_x, triangle->b.raster_y, triangle->c.raster_x, triangle->c.raster_y);
+    printf("ORIGINAL:a_x: %d, a_y: %d, b_x: %d, b_y: %d, c_x: %d, c_y: %d\n", triangle->a.raster_x, triangle->a.raster_y, triangle->b.raster_x, triangle->b.raster_y, triangle->c.raster_x, triangle->c.raster_y);
 
     Triangle_t to_draw = sort_triangle_vertex(triangle);
-    int y_position = to_draw.a.raster_y;
+    printf("FIXED: a_x: %d, a_y: %d, b_x: %d, b_y: %d, c_x: %d, c_y: %d\n", to_draw.a.raster_x, to_draw.a.raster_y, to_draw.b.raster_x, to_draw.b.raster_y, to_draw.c.raster_x, to_draw.c.raster_y);
 
-    //printf("FIXED: a_x: %d, a_y: %d, b_x: %d, b_y: %d, c_x: %d, c_y: %d\n", to_draw.a.raster_x, to_draw.a.raster_y, to_draw.b.raster_x, to_draw.b.raster_y, to_draw.c.raster_x, to_draw.c.raster_y);
-    for (; y_position <= to_draw.b.raster_y; y_position++)
-    {
+    int y_position = to_draw.a.raster_y;
+    for (; y_position <= to_draw.b.raster_y; y_position++){
         float gradient = 1;
         if(to_draw.a.raster_y != to_draw.b.raster_y){
             gradient = (float)(y_position - to_draw.a.raster_y) / (float)(to_draw.b.raster_y - to_draw.a.raster_y);
@@ -167,8 +170,7 @@ void draw_triangle(Context_t* ctx, Triangle_t* triangle){
             //put_pixel(ctx, x_position, y_position, 255, 255, 255);
         }
     }
-    for (; y_position <= to_draw.c.raster_y; y_position++)
-    {
+    for (; y_position <= to_draw.c.raster_y; y_position++){
         float gradient = 1;
         if(to_draw.c.raster_y != to_draw.b.raster_y){
             gradient = (float)(y_position - to_draw.c.raster_y) / (float)(to_draw.b.raster_y - to_draw.c.raster_y);
@@ -181,7 +183,7 @@ void draw_triangle(Context_t* ctx, Triangle_t* triangle){
             total_gradient = (float)(y_position - to_draw.a.raster_y) / (float)(to_draw.c.raster_y - to_draw.a.raster_y);
         }
         // float total_gradient = (float)(y_position - to_draw.a.raster_y) / (float)(to_draw.c.raster_y - to_draw.a.raster_y);
-        float starting_x = lerp(to_draw.c.raster_x, to_draw.a.raster_x, total_gradient);
+        float starting_x = lerp(to_draw.a.raster_x, to_draw.c.raster_x, total_gradient);
 
         //printf("x1: %f, x2: %f\n", starting_x, x_final_position);
         float end = calculate_max(starting_x, x_final_position);

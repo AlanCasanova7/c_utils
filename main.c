@@ -10,7 +10,7 @@
 int main(int argc, char **argv)
 {
     Context_t ctx;
-    ctx.camera = vector3_new(0, 0, -2);
+    ctx.camera = vector3_new(0, 0, -5);
     ctx.width = 600;
     ctx.height = 600;
 
@@ -20,10 +20,10 @@ int main(int argc, char **argv)
     vector3_t color2 = { .x = 0, .y = 255, .z = 125};
     vector3_t color3 = { .x = 0, .y = 0, .z = 255};
 
-    Triangle_t triangle_a = Triangle_new(Vertex_new(vector3_new(-1, 0, 0), color1), Vertex_new(vector3_new(-1, -1, 0), color2), Vertex_new(vector3_new(0, -1, 0), color3));
-    Triangle_t triangle_b = Triangle_new(Vertex_new(vector3_new(1, -1, 0), color2), Vertex_new(vector3_new(0, -1, 0), color2), Vertex_new(vector3_new(1, 0, 0), color3));
-    Triangle_t triangle_c = Triangle_new(Vertex_new(vector3_new(-1, 1, 0), color1), Vertex_new(vector3_new(-1, 0, 0), color2), Vertex_new(vector3_new(0, 1, 0), color3));
-    Triangle_t triangle_d = Triangle_new(Vertex_new(vector3_new(1, 1, 0), color1), Vertex_new(vector3_new(0, 1, 0), color2), Vertex_new(vector3_new(1, 0, 0), color3));
+    Triangle_t triangle_a = Triangle_new(Vertex_new(vector3_new(-1, 0, 2), color1), Vertex_new(vector3_new(-1, -1, 2), color2), Vertex_new(vector3_new(0, -1, 2), color3));
+    Triangle_t triangle_b = Triangle_new(Vertex_new(vector3_new(1, -1, 0), color2), Vertex_new(vector3_new(0, -1, 0), color2), Vertex_new(vector3_new(1, 0, 1), color3));
+    Triangle_t triangle_c = Triangle_new(Vertex_new(vector3_new(-1, 1, 1), color1), Vertex_new(vector3_new(-1, 0, 0), color2), Vertex_new(vector3_new(0, 1, 1), color3));
+    Triangle_t triangle_d = Triangle_new(Vertex_new(vector3_new(1, 1, -1), color1), Vertex_new(vector3_new(0, 1, 1), color2), Vertex_new(vector3_new(1, 0, 0), color3));
 
     Triangle_t* array_of_vector = NULL;
     size_t array_of_vector_size = 0;
