@@ -22,16 +22,18 @@ int main(int argc, char **argv)
 
     Triangle_t triangle_a = Triangle_new(Vertex_new(vector3_new(-1, 0, 0), color1), Vertex_new(vector3_new(-1, -1, 0), color2), Vertex_new(vector3_new(0, -1, 0), color3));
     Triangle_t triangle_b = Triangle_new(Vertex_new(vector3_new(1, -1, 0), color2), Vertex_new(vector3_new(0, -1, 0), color2), Vertex_new(vector3_new(1, 0, 0), color3));
-    //Triangle_t triangle_c = Triangle_new(Vertex_new(vector3_new(-1, 1, 0), color1), Vertex_new(vector3_new(-1, 0, 0), color2), Vertex_new(vector3_new(0, 1, 0), color3));
-    //Triangle_t triangle_d = Triangle_new(Vertex_new(vector3_new(1, 1, 0), color1), Vertex_new(vector3_new(0, 1, 0), color2), Vertex_new(vector3_new(1, 0, 0), color3));
+    Triangle_t triangle_c = Triangle_new(Vertex_new(vector3_new(-1, 1, 0), color1), Vertex_new(vector3_new(-1, 0, 0), color2), Vertex_new(vector3_new(0, 1, 0), color3));
+    Triangle_t triangle_d = Triangle_new(Vertex_new(vector3_new(1, 1, 0), color1), Vertex_new(vector3_new(0, 1, 0), color2), Vertex_new(vector3_new(1, 0, 0), color3));
 
     Triangle_t* array_of_vector = NULL;
     size_t array_of_vector_size = 0;
 
     append_vector(&array_of_vector, &array_of_vector_size, triangle_a);
-    printf("%llu\n", sizeof(array_of_vector));
+    //printf("%llu\n", sizeof(array_of_vector));
     append_vector(&array_of_vector, &array_of_vector_size, triangle_b);
-    printf("%llu\n", sizeof(array_of_vector));
+    append_vector(&array_of_vector, &array_of_vector_size, triangle_c);
+    append_vector(&array_of_vector, &array_of_vector_size, triangle_d);
+    //printf("%llu\n", sizeof(array_of_vector));
 
     // array_of_vector_size += 1;
     // Triangle_t* resized_area = (Triangle_t*)realloc(array_of_vector,sizeof(Triangle_t) * array_of_vector_size);
@@ -94,10 +96,10 @@ int main(int argc, char **argv)
     // for(int i = 0; i < array_of_vector_size; i++){
     //     draw_triangle(&ctx, &array_of_vector[i]);
     // }
-    // for(int i = 0; i < array_of_vector_size; i++){
-    //     draw_triangle(&ctx, &array_of_vector[i]);
-    // }
-    draw_triangle(&ctx, &array_of_vector[0]);
+    for(int i = 0; i < array_of_vector_size; i++){
+        draw_triangle(&ctx, &array_of_vector[i]);
+    }
+    //draw_triangle(&ctx, &array_of_vector[0]);
     //draw_triangle(&ctx, &triangle_c);
     //draw_triangle(&ctx, &triangle_d);
 

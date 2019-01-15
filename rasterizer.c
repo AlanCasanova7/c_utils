@@ -125,20 +125,14 @@ vector3_t interpolate_vertex_color(Vertex_t a, Vertex_t b, Vertex_t c, float x_p
 }
 
 void append_vector(Triangle_t** array_of_vector, size_t* array_of_vector_size, Triangle_t value){
-    printf("sizeof value: %llu\n", sizeof(value));
-    printf("array points at: %p, there are: %zu elements\n", *array_of_vector, sizeof(*array_of_vector) / sizeof(*array_of_vector[0]));
     *array_of_vector_size += 1;
-    printf("array_of_vector_size is now: %zu, old value was: %llu\n", *array_of_vector_size, *array_of_vector_size-1);
     Triangle_t* resized_area = (Triangle_t*)realloc(*array_of_vector, sizeof(Triangle_t) * *array_of_vector_size);
-    printf("resized array points at: %p, there are: %zu elements\n", resized_area, sizeof(resized_area) / sizeof(resized_area[0]));
     if(!resized_area){
         printf("PANIC");
         return;
     }
+    resized_area[*array_of_vector_size-1] = value;
     *array_of_vector = resized_area;
-    printf("now old array points at: %p, there are: %zu elements\n", *array_of_vector, sizeof(*array_of_vector) / sizeof(*array_of_vector[0]));
-    *array_of_vector[*array_of_vector_size-1] = value;
-    printf("At the end the old array have: %zu elements.\n", sizeof(*array_of_vector) / sizeof(*array_of_vector[0]));
 }
 
 void draw_triangle(Context_t* ctx, Triangle_t* triangle){
