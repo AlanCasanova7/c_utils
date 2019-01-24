@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "dictionary.h": "c",
-        "sdl.h": "c"
+        "sdl.h": "c",
+        "obj_parser.h": "c"
     }
 }

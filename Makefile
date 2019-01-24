@@ -1,5 +1,5 @@
 CC=clang
-CFLAGS=-O2 -Wall -Werror -I. -Wno-pragma-pack
+CFLAGS=-O2 -Wall -I. -Wno-pragma-pack
 LDFLAGS=-L. -lSDL2
 BINARY_TESTS= main.exe
 
@@ -12,7 +12,7 @@ run_tests.exe: tests.o dictionary.o hash.o
 tests.o: tests.c aiv_unit_test.h my_math.h
 	$(CC) -c -o $@ $(CFLAGS) $<
 
-main.exe: main.o rasterizer.o
+main.exe: main.o obj_parser.o rasterizer.o
 	$(CC) -o $(BINARY_TESTS) $(LDFLAGS) $^
 	./$(BINARY_TESTS)
 
@@ -26,4 +26,7 @@ hash.o: hash.c hash.h
 	$(CC) -c -o $@ $(CFLAGS) $<
 
 rasterizer.o: rasterizer.c rasterizer.h my_math.h
+	$(CC) -c -o $@ $(CFLAGS) $<
+
+obj_parser.o: obj_parser.c obj_parser.h rasterizer.o
 	$(CC) -c -o $@ $(CFLAGS) $<

@@ -1,3 +1,5 @@
+#include <math.h>
+
 typedef union vector2{
     struct{
         float x, y;
@@ -90,4 +92,47 @@ static inline float calculate_min(float a, float b){
 
 static inline float calculate_max(float a, float b){
     return a > b ? a : b;
+}
+
+static inline float linear_convert(float value, float old_min, float old_max, float new_min, float new_max)
+{
+    return (value - old_min) * (new_max - new_min) / (old_max - old_min) + new_min;
+}
+
+static inline float vector3_length(vector3_t a)
+{
+    return sqrtf(a.x * a.x + a.y * a.y + a.z * a.z);
+}
+
+static inline vector3_t vector3_mul(vector3_t a, float b)
+{
+    vector3_t v;
+    v.x = a.x * b;
+    v.y = a.y * b;
+    v.z = a.z * b;
+
+    return v;
+}
+
+static inline vector3_t vector3_normalized(vector3_t a)
+{
+    float length = 1.0 / vector3_length(a);
+
+    return vector3_mul(a, length);
+}
+
+static inline float clampf(float value, float _min, float _max)
+{
+    if (value < _min)
+        return _min;
+
+    if (value > _max)
+        return _max;
+
+    return value;
+}
+
+static inline float vector3_dot(vector3_t a, vector3_t b)
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
